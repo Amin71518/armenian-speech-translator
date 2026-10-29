@@ -1,0 +1,49 @@
+[project]
+name = "armenian-speech"
+version = "0.1.0"
+description = "Local Armenian transcription and English translation experiments"
+authors = [{name = "SpeechRecognition contributors"}]
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "faster-whisper>=1.2.0,<2.0",
+    "av>=14,<19",
+    "transformers>=4.51,<5.0",
+    "torch>=2.6,<3.0",
+    "sentencepiece>=0.2,<0.3",
+    "sacremoses>=0.1,<0.2",
+    "psutil>=7.0,<8.0",
+    "jiwer>=4.0,<5.0",
+]
+
+[project.scripts]
+armenian-speech = "armenian_speech.cli:main"
+
+[tool.poetry]
+packages = [{include = "armenian_speech", from = "src"}]
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[tool.poetry.dependencies]
+torch = {source = "pytorch-cpu"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.3,<10"
+ruff = ">=0.11,<1.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[build-system]
+requires = ["poetry-core>=2.0,<3.0"]
+build-backend = "poetry.core.masonry.api"
