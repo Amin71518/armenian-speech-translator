@@ -12,6 +12,7 @@ from time import perf_counter
 
 from armenian_speech.metrics import MemorySampler, error_rates
 from armenian_speech.pipeline import process_wav
+from armenian_speech.translation import DEFAULT_TRANSLATION_MODEL
 
 
 def positive_int(value: str) -> int:
@@ -59,7 +60,7 @@ def parser() -> argparse.ArgumentParser:
         "--asr-model",
         help="ONNX local directory (default: cache-dir/vana); Whisper name/path (default: base)",
     )
-    cli.add_argument("--translation-model", default="Helsinki-NLP/opus-mt-hy-en")
+    cli.add_argument("--translation-model", default=DEFAULT_TRANSLATION_MODEL)
     cli.add_argument("--threads", type=positive_int, default=4)
     cli.add_argument("--cache-dir", type=Path, default=Path(".cache/models"))
     cli.add_argument("--offline", action="store_true", help="Require cached models; no downloads")
@@ -154,12 +155,13 @@ def run(args: argparse.Namespace) -> None:
         "asr_revision": asr_revision,
         "asr_decoder": "rnnt_greedy" if args.asr_backend == "onnx" else "whisper",
         "translation_model": args.translation_model,
+        "translation_revision": getattr(translator, "revision", None),
         "language": "hy",
         "asr_compute_type": "int8",
         "asr_temperature": getattr(asr, "temperature", None),
         "translation_compute_type": "float32",
         "asr_beam_size": 1 if args.asr_backend == "whisper" else None,
-        "translation_beam_size": 1,
+        "translation_beam_size": getattr(translator, "generation_options", {}).get("num_beams", 1),
         "threads": args.threads,
         "asr_load_s": asr_load_s,
         "translation_load_s": translation_load_s,

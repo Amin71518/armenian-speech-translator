@@ -3,7 +3,8 @@
 Stage 1 is a local CPU experiment: WAV -> Armenian transcription -> English translation
 in the terminal. Live capture, VAD and speaker identification are later stages in PLAN.md.
 Vana-Labs FastConformer RNN-T INT8 is the accepted MVP ASR and default WAV backend.
-Marian remains the translator with known quality limitations. See TESTS.md for results.
+NLLB-200 distilled 600M is the default translator (CPU float32, greedy). Translation
+quality limitations remain; see TRANSLATION_COMPARISON.md for the measured comparison.
 
 ## Setup on Windows
 
@@ -12,15 +13,17 @@ Python 3.13 and Poetry 2 are required. In this project directory:
 ```powershell
 poetry install
 poetry run python scripts/download_asr.py
+poetry run python scripts/download_translation.py --model nllb
 poetry run python scripts/prepare_samples.py
-poetry run armenian-speech --manifest data/local/fleurs/manifest.jsonl --report reports/vana_marian_pipeline.json
+poetry run armenian-speech --manifest data/local/fleurs/manifest.jsonl --offline --report reports/vana_nllb_pipeline.json
 ```
 
 Poetry creates `.venv/` in this directory. PyTorch comes from the official CPU wheel
 index; no CUDA is needed. The download script prepares the pinned ONNX model in
 `.cache/models/vana/`. The CLI requires that directory and does not download or
-replace the ONNX model automatically. The first inference run may download Marian
-into `.cache/models/translation/`. Audio preparation uses public dataset endpoints.
+replace the ONNX model automatically. The translation download script prepares a
+pinned snapshot in `.cache/models/translation/`; NLLB/M2M100 inference loads that
+local directory, including its tokenizer. No NeMo is required. Audio preparation uses public endpoints.
 Inference itself is entirely local. After both models are cached:
 
 ```powershell
@@ -47,11 +50,18 @@ alone does not switch the backend. Keep WAV clips short.
   historical baseline, available explicitly for comparison. CPU INT8, fixed `hy`
   transcription, beam size 1 and the documented temperature schedule. ASR consumes
   each entire WAV and exhausts the lazy segment generator before timing ends.
-- [Helsinki-NLP/opus-mt-hy-en](https://huggingface.co/Helsinki-NLP/opus-mt-hy-en):
-  Marian HY -> EN, CPU float32, greedy decoding, one translation per ASR segment.
-  Unchanged by this integration; semantic errors remain even with correct ASR.
-- Next candidates, if measurements justify them: Whisper Small, a verified Armenian
-  fine-tune, and NLLB-200 distilled 600M. No alternate model is selected automatically.
+- [NLLB-200 distilled 600M](https://huggingface.co/facebook/nllb-200-distilled-600M):
+  default translator, CPU float32, greedy, one translation per ASR segment;
+  `hye_Armn` -> forced `eng_Latn`, pinned revision
+  `f8d333a098d19b4fd9a8b18f94170487ad3f821d`. Input limit 512 tokens; oversized
+  input is rejected. On correct reference text: chrF++ 57.86 versus Marian 32.88.
+  This is a research model under CC-BY-NC 4.0, not a general commercial deployment license.
+- [M2M100 418M](https://huggingface.co/facebook/m2m100_418M): tested reserve,
+  chrF++ 39.61, lower quality than NLLB on these references. MIT license.
+- [Marian HY EN](https://huggingface.co/Helsinki-NLP/opus-mt-hy-en): historical
+  translator baseline, still available explicitly with `--translation-model
+  Helsinki-NLP/opus-mt-hy-en`. Supported translation IDs are exactly these three;
+  there is no automatic model switching after errors.
 
 ## Evaluation
 
@@ -89,11 +99,14 @@ automatic translation score is substituted for a human assessment.
 To isolate translator errors from recognition errors, feed it the Armenian reference:
 
 ```powershell
-poetry run python scripts/check_translation.py --manifest data/local/fleurs/manifest.jsonl --offline
+poetry run python scripts/check_translation.py --manifest data/local/fleurs/manifest.jsonl --offline --report reports/nllb_translation.json
 ```
 
-This diagnostic prints predicted and reference English and translation time. It does
-not run ASR, and its input is an ideal transcript rather than actual recognized speech.
+This diagnostic prints predicted and reference English and translation time, and
+runs two passes by default. It does not run ASR. `--model` selects a supported model;
+`--beams` explicitly tests another decoding configuration. Its optional local report
+contains timing, chrF++, power state and three research examples. SacreBLEU is a dev
+dependency, separate from the WAV runtime. Full results are in TRANSLATION_COMPARISON.md.
 
 An opt-in `--report` JSON contains numeric metrics, sample filenames and model
 configuration only. Recognized text and translations appear only in the terminal.
@@ -134,13 +147,19 @@ mean WAV processing time 11.72 s, maximum 24.36 s and sampled RSS 1012 MiB.
 ASR is the main speed and quality bottleneck. Marian also changes meaning when
 given correct normalized Armenian references (mean translation time 0.231 s).
 The old configuration remains available explicitly for reproducibility. Vana is now
-the default, with the same Marian translator. Stage 1 continues before live implementation.
+the default ASR. NLLB now replaces Marian as the default translator. Stage 1 continues.
 
-The full default ONNX -> Marian -> terminal chain was run offline on all 15 WAVs:
+The earlier ONNX -> Marian -> terminal chain was run offline on all 15 WAVs:
 mean processing 0.452 s, maximum 0.747 s, RTF 0.0488, sampled RSS 952.68 MiB.
 ASR loading was 2.016 s and translator loading 7.868 s, excluded from file processing.
 These numbers establish successful integration and WAV processing speed; they do not
 establish translation quality or live phrase-end latency. See TESTS.md for details.
+
+The selected ONNX -> NLLB -> terminal chain completed all 15 WAVs offline:
+mean 1.660 s, maximum 2.805 s, RTF 0.1792, sampled RSS 3076.56 MiB.
+ASR/NLLB loading took 2.079/6.249 s, excluded from file processing. Final measurements
+used connected power. Meanings, names and longer sentences can still be mistranslated;
+this does not establish the 5 second live target or final call quality.
 
 ## ASR-only comparison
 

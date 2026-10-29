@@ -67,3 +67,26 @@
 - Offline full chain passed all 15 WAVs: mean 0.452 s, max 0.747 s after loading,
   WER 6.67%, CER 2.03%. Loading is reported separately. Translation quality remains
   inadequate on some samples and is not addressed by this integration.
+
+## 2026-10-29 Translation model selection
+
+- Compare translators on the same 15 correct normalized Armenian references, not ASR
+  outputs. Add SacreBLEU only to dev dependencies for supporting corpus chrF++; also
+  compare meaning with aligned English. Two passes, fresh process per model, CPU
+  float32, four threads, greedy. Model loading and downloads are outside MT timing.
+- Select NLLB distilled 600M: chrF++ 57.86, versus M2M100 39.61 and Marian 32.88.
+  Final second-pass mean/max MT: 1.335/2.007 s for NLLB, 1.085/1.738 s for M2M100,
+  0.186/0.359 s for Marian. Quality takes priority over the reserve's modest speed gain.
+- A separate NLLB beam=2 test reduced chrF++ to 56.83 and was slower, with unstable
+  timings during changing power conditions. Keep greedy; do not add runtime fallback.
+- Load NLLB/M2M100 tokenizers and weights from pinned prepared local snapshots.
+  This avoids a Transformers 4.57.6 model_info call despite local_files_only=True.
+  Sequential snapshot preparation avoids a Windows symlink support detection race.
+- Default translation ID is NLLB, with explicit hye_Armn input and eng_Latn BOS.
+  Retain translate(text) and the existing pipeline. Each model loads once. ASR is unchanged.
+- Full selected chain: mean 1.660 s, max 2.805 s per WAV after loading, sampled RSS
+  3076.56 MiB. Early runs were on battery; final reference runs and full chain had
+  connected power. Actual numbers, adverse examples and caveats are in TRANSLATION_COMPARISON.md.
+- NLLB still makes material errors. The current small FLEURS/FLORES-derived sample
+  does not prove conversational quality. Record its research/noncommercial license
+  and keep the project distinct from any future commercial deployment decision.

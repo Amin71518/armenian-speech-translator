@@ -9,6 +9,7 @@ def test_default_cli_backend_is_onnx():
     args = parser().parse_args(["--wav", "sample.wav"])
     assert args.asr_backend == "onnx"
     assert args.asr_model is None
+    assert args.translation_model == "facebook/nllb-200-distilled-600M"
 
 
 def test_cli_loads_onnx_and_translation_once_for_multiple_files(tmp_path, monkeypatch, capsys):
@@ -35,7 +36,7 @@ def test_cli_loads_onnx_and_translation_once_for_multiple_files(tmp_path, monkey
 
     class Translation:
         def __init__(self, model, cache, threads, offline):
-            assert model == "Helsinki-NLP/opus-mt-hy-en"
+            assert model == "facebook/nllb-200-distilled-600M"
             assert offline
             calls["translation_loads"] += 1
 

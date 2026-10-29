@@ -134,3 +134,37 @@ the old ambiguous beam_size is split into asr_beam_size and translation_beam_siz
 single ASR/translator initialization across multiple WAVs with terminal output and
 correct report metadata, missing-model failure without fallback, and explicit Whisper
 selection. Existing 14 tests also pass. `ruff check .`: passed.
+
+## 2026-10-29 Translation comparison and selected NLLB pipeline
+
+TRANSLATION_COMPARISON.md contains all numbers, model revisions, examples and limits.
+Correct normalized Armenian references were used for translator selection, without
+ASR output. Final greedy second-pass corpus chrF++ / mean / maximum MT:
+
+| Model | chrF++ | Mean MT seconds | Max MT seconds |
+| --- | ---: | ---: | ---: |
+| Marian | 32.8794 | 0.1857 | 0.3592 |
+| NLLB distilled 600M | 57.8622 | 1.3352 | 2.0068 |
+| M2M100 418M | 39.6059 | 1.0848 | 1.7375 |
+
+Each ran two passes in its own process, four CPU threads, float32, without sampling.
+Final reports recorded connected power at both start and end. NLLB beam=2 was a
+separate unsuccessful experiment: chrF++ 56.8279, with higher, unstable processing times.
+Initial NLLB setup exposed a Windows cache symlink race and an unwanted Transformers
+metadata request. Sequential preparation and local snapshot paths resolved these;
+subsequent real inference succeeded in the restricted environment without network.
+
+Default pipeline command: `poetry run armenian-speech --manifest data/local/fleurs/manifest.jsonl --offline --report reports/vana_nllb_pipeline.json`
+
+All 15 WAVs completed: mean 1.6603 s, median 1.6052 s, max 2.8048 s, RTF 0.1792;
+mean ASR 0.2043 s and mean MT 1.4560 s; sampled RSS 3076.56 MiB. ASR loading
+2.0793 s and NLLB loading 6.2493 s are separate. ASR WER/CER remain 6.67%/2.03%.
+The English outputs differ from reference-text evaluation because actual ASR outputs
+contain errors and retain punctuation/case. Translation quality is still imperfect.
+These file timings do not establish live end-of-phrase latency.
+
+`pytest`: **22 passed**; `ruff check .`: passed. Tests include multilingual source
+and target language controls, greedy decoding, local-only pinned snapshots, empty
+input, oversized input, unsupported-model rejection and updated default CLI.
+SacreBLEU 2.6.0 is a dev dependency; the normal WAV pipeline does not import it.
+Historical commands for the Marian-only check now need explicit `--model Helsinki-NLP/opus-mt-hy-en`.
