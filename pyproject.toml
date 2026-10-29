@@ -14,6 +14,7 @@ dependencies = [
     "sacremoses>=0.1,<0.2",
     "psutil>=7.0,<8.0",
     "jiwer>=4.0,<5.0",
+    "onnx-asr[cpu,hub]>=0.10,<1.0",
 ]
 
 [project.scripts]

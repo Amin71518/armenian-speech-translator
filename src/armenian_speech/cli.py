@@ -131,6 +131,7 @@ def run(args: argparse.Namespace) -> None:
         "translation_model": args.translation_model,
         "language": "hy",
         "asr_compute_type": "int8",
+        "asr_temperature": getattr(asr, "temperature", None),
         "translation_compute_type": "float32",
         "beam_size": 1,
         "threads": args.threads,

@@ -35,3 +35,21 @@
   references is fast (mean 0.231 s), but introduces substantial semantic errors.
   Keep defaults for reproducibility and continue stage 1 with an explicit comparison;
   do not move the rejected configuration into the live stage. Details are in TESTS.md.
+
+## 2026-10-29 ASR comparison and baseline audit
+
+- Correct the earlier greedy description: Whisper's default temperature schedule can
+  retry decoding with stochastic sampling despite beam_size=1. Make that schedule
+  explicit without changing the old default. Separately test temperature=0.
+- Add a single Vana-Labs ONNX RNN-T adapter matching the existing transcribe protocol;
+  keep the pipeline and Marian implementation unchanged. Keep comparison in a small
+  ASR-only runner, separate processes, two passes, same 15 WAVs with checked hashes.
+- Install onnx-asr 0.12.0 only; no NeMo and no FP32 substitution. Pin the model revision
+  and record artifact hashes. Use CPUExecutionProvider and four CPU threads.
+- ASR-only measurements replace invalid memory/RTF comparisons against the combined
+  old Base + Marian process. Numeric reports additionally retain three examples as
+  explicitly requested for this research comparison; no general transcript logging.
+- Recommend Vana for further Stage 1 evaluation: WER 6.67%, CER 2.03%, second-pass
+  mean ASR 0.139 s, max 0.207 s, sampled RSS 453 MiB. Greedy Whisper is faster than
+  the old temperature configuration but still inaccurate. Full findings, examples
+  and limitations are in ASR_COMPARISON.md. No claim about live latency is made.

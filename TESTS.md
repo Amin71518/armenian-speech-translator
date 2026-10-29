@@ -79,3 +79,16 @@ making deployment claims.
 Keep stage 1 open for deliberate model comparison: verify an Armenian ASR alternative
 and compare a stronger translator on the same references. Do not proceed to live
 capture with the rejected baseline or hide these failures with automatic fallback.
+
+## 2026-10-29 ASR-only follow-up
+
+See ASR_COMPARISON.md for the benchmark audit and all actual comparison numbers.
+Installed onnx-asr 0.12.0; existing ONNX Runtime 1.31.1 runs the Vana INT8 export
+on CPU. NeMo is not installed. Source audio and references are unchanged.
+
+`pytest`: **14 passed**; `ruff check .`: passed. New tests verify CPU/INT8 adapter
+configuration and file bounds, empty recognition, corpus scoring and ASR timer
+boundaries, and explicit Whisper language/task/temperature with lazy consumption.
+Both full backends ran successfully in the restricted environment from local files.
+The ONNX adapter remains compatible with the existing pipeline contract; no live
+components or translation changes were introduced.

@@ -122,3 +122,37 @@ ASR is the main speed and quality bottleneck. Marian also changes meaning when
 given correct normalized Armenian references (mean translation time 0.231 s).
 These defaults are retained to reproduce the failed baseline, not as accepted models.
 Stage 1 continues with deliberate model comparisons before live implementation.
+
+## ASR-only comparison
+
+The Vana-Labs FastConformer RNN-T INT8 adapter implements the existing `transcribe`
+interface. The translation module and pipeline are unchanged. NeMo is not required.
+The comparison runner never imports or loads Marian. Downloads and inference are
+separate; inference reads local artifacts only and explicitly selects the CPU provider.
+
+```powershell
+poetry run python scripts/download_asr.py
+poetry run python -m armenian_speech.benchmark --backend whisper --passes 2 --report reports/whisper_asr.json
+poetry run python -m armenian_speech.benchmark --backend whisper --whisper-decoding greedy --passes 2 --report reports/whisper_greedy.json
+poetry run python -m armenian_speech.benchmark --backend onnx --limit 1 --passes 1 --report reports/onnx_smoke.json
+poetry run python -m armenian_speech.benchmark --backend onnx --passes 2 --report reports/vana_asr.json
+```
+
+Run commands sequentially in fresh processes. Each model is loaded once per process;
+pass 1 includes first inference, pass 2 reuses the model. Times include WAV decoding
+and ASR, and exclude scoring and terminal output. RTF is ASR seconds / audio seconds.
+RSS includes model loading and all passes in that process. File SHA-256 checksums
+must match the existing manifest. Reports contain numeric metrics and three explicitly
+requested recognition examples for the research comparison; they are ignored by Git.
+No general transcript logging is added to the application.
+
+Audit correction: the original Whisper run used faster-whisper's default temperature
+schedule `[0, 0.2, 0.4, 0.6, 0.8, 1]`. Beam size 1 alone does not ensure greedy decoding.
+The schedule can trigger repeated decoding and stochastic outputs. `--whisper-decoding
+greedy` is a separately labelled experiment with temperature 0, never a silent change
+to the original baseline. These settings are unrelated to replacing failed models.
+
+The ONNX adapter returns one segment spanning the file, or no segments for empty text.
+Those bounds are not detected phrase or word timestamps. The CPU default preprocessor
+in onnx-asr 0.12 is its NumPy implementation; the downloaded model's `nemo80.onnx` is
+retained as source provenance, not silently substituted into that implementation.
