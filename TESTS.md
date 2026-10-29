@@ -92,3 +92,45 @@ boundaries, and explicit Whisper language/task/temperature with lazy consumption
 Both full backends ran successfully in the restricted environment from local files.
 The ONNX adapter remains compatible with the existing pipeline contract; no live
 components or translation changes were introduced.
+
+## 2026-10-29 Default ONNX WAV pipeline integration
+
+The user accepted Vana-Labs FastConformer INT8 for MVP. Main CLI now defaults to
+the existing ONNX adapter; pipeline.py and translation.py are unchanged. Both models
+initialize once before iterating input files. Whisper requires explicit selection.
+
+Command: `poetry run armenian-speech --manifest data/local/fleurs/manifest.jsonl --offline --report reports/vana_marian_pipeline.json`
+
+The complete WAV -> ONNX ASR -> unchanged Marian -> terminal chain completed all
+15 existing WAVs, with timestamp, WAV label, Armenian and English printed. No model
+downloads were needed. Each WAV produced one file-spanning ASR segment.
+
+| Measurement | Observed value |
+| --- | ---: |
+| Mean complete WAV processing after model loading | 0.452 s |
+| Median complete WAV processing | 0.409 s |
+| Maximum complete WAV processing | 0.747 s |
+| Mean ASR time | 0.172 s |
+| Mean translation time | 0.281 s |
+| Total processing RTF | 0.0488 |
+| ASR model loading including imports | 2.016 s |
+| Marian loading including imports | 7.868 s |
+| Sampled peak process RSS including both models | 952.68 MiB |
+| Corpus ASR WER | 6.67% |
+| Corpus ASR CER | 2.03% |
+
+File timers include decoding, ASR, translation and printing HY/EN. They exclude
+model loading, WER/CER scoring, reference printing and final report writing. This
+is one fresh-process run without separate warmup; all models reuse their instances.
+It is not a process-launch-to-exit measurement or a live phrase-end latency test.
+Translation remains semantically unreliable on some samples; successfully executing
+the full chain does not establish that the English output meets final quality goals.
+
+The JSON report contains numeric measurements and backend metadata, not recognized
+text or translations. ONNX fields identify its repo, revision and RNN-T decoder;
+the old ambiguous beam_size is split into asr_beam_size and translation_beam_size.
+
+`pytest`: **18 passed**. Four additional tests verify default backend selection,
+single ASR/translator initialization across multiple WAVs with terminal output and
+correct report metadata, missing-model failure without fallback, and explicit Whisper
+selection. Existing 14 tests also pass. `ruff check .`: passed.

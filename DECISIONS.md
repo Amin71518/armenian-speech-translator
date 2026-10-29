@@ -53,3 +53,17 @@
   mean ASR 0.139 s, max 0.207 s, sampled RSS 453 MiB. Greedy Whisper is faster than
   the old temperature configuration but still inaccurate. Full findings, examples
   and limitations are in ASR_COMPARISON.md. No claim about live latency is made.
+
+## 2026-10-29 Default WAV pipeline uses accepted FastConformer
+
+- The user accepted Vana-Labs FastConformer INT8 as the primary MVP ASR. Make it the
+  CLI default, initialized once before all files. Use the existing ONNX adapter and
+  transcribe contract; do not modify pipeline.py or Marian translation logic.
+- Default ONNX artifacts are local at cache-dir/vana, prepared by download_asr.py.
+  Missing artifacts stop with an actionable error, without implicit download or
+  fallback. --asr-model selects a prepared ONNX directory.
+- Retain Whisper only as explicit --asr-backend whisper for reproducibility. Identify
+  the ONNX repo/revision and RNN-T decoder in reports; separate ASR/Marian beam sizes.
+- Offline full chain passed all 15 WAVs: mean 0.452 s, max 0.747 s after loading,
+  WER 6.67%, CER 2.03%. Loading is reported separately. Translation quality remains
+  inadequate on some samples and is not addressed by this integration.

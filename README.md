@@ -2,7 +2,8 @@
 
 Stage 1 is a local CPU experiment: WAV -> Armenian transcription -> English translation
 in the terminal. Live capture, VAD and speaker identification are later stages in PLAN.md.
-The first baseline has been measured and rejected; see TESTS.md for results and limits.
+Vana-Labs FastConformer RNN-T INT8 is the accepted MVP ASR and default WAV backend.
+Marian remains the translator with known quality limitations. See TESTS.md for results.
 
 ## Setup on Windows
 
@@ -10,33 +11,45 @@ Python 3.13 and Poetry 2 are required. In this project directory:
 
 ```powershell
 poetry install
+poetry run python scripts/download_asr.py
 poetry run python scripts/prepare_samples.py
-poetry run armenian-speech --manifest data/local/fleurs/manifest.jsonl --report reports/base.json
+poetry run armenian-speech --manifest data/local/fleurs/manifest.jsonl --report reports/vana_marian_pipeline.json
 ```
 
 Poetry creates `.venv/` in this directory. PyTorch comes from the official CPU wheel
-index; no CUDA is needed. The first inference run downloads the selected models into
-`.cache/models/`. Audio preparation uses public dataset download endpoints.
-Inference itself is entirely local. After the models are cached:
+index; no CUDA is needed. The download script prepares the pinned ONNX model in
+`.cache/models/vana/`. The CLI requires that directory and does not download or
+replace the ONNX model automatically. The first inference run may download Marian
+into `.cache/models/translation/`. Audio preparation uses public dataset endpoints.
+Inference itself is entirely local. After both models are cached:
 
 ```powershell
 poetry run armenian-speech --wav data/local/fleurs/001.wav --offline
 poetry run armenian-speech --manifest data/local/fleurs/manifest.jsonl --offline
 ```
 
-Use `--asr-model small` for a deliberate comparison, `--threads 4` to control CPU
-threads, and `--help` for all arguments. Model failures are reported without automatic
-fallback. Only WAV input is supported in this experiment; keep clips short.
+Use `--asr-model PATH` for another prepared ONNX directory; otherwise the CLI uses
+`--cache-dir` followed by `vana/`. ONNX requires mono PCM16 16 kHz WAV. Use
+`--threads 4` to control model CPU threads and `--help` for all arguments.
+Missing ONNX files are an error with preparation instructions; there is no fallback.
+Whisper is available only through explicit `--asr-backend whisper`, for example
+`--asr-backend whisper --asr-model base`; its default model is Base. A model name
+alone does not switch the backend. Keep WAV clips short.
 
-## Baseline candidates
+## Models
+
+- [Vana-Labs FastConformer Armenian](https://huggingface.co/Vana-Labs/stt-fastconformer-armenian):
+  default ASR, RNN-T INT8, ONNX Runtime CPU, revision
+  `ec92cef52199c3874681321b13853e8fe602d23f`. Accepted for MVP after the same
+  15-WAV comparison (WER 6.67%, CER 2.03%). Loaded once before the file loop.
 
 - [Multilingual Whisper Base via faster-whisper](https://github.com/SYSTRAN/faster-whisper):
-  CPU INT8, fixed `hy` transcription, beam size 1. Base is a modest starting point for
-  CPU latency, not a claim of adequate Armenian quality. ASR consumes each entire WAV
-  and exhausts the lazy segment generator before timing ends.
+  historical baseline, available explicitly for comparison. CPU INT8, fixed `hy`
+  transcription, beam size 1 and the documented temperature schedule. ASR consumes
+  each entire WAV and exhausts the lazy segment generator before timing ends.
 - [Helsinki-NLP/opus-mt-hy-en](https://huggingface.co/Helsinki-NLP/opus-mt-hy-en):
   Marian HY -> EN, CPU float32, greedy decoding, one translation per ASR segment.
-  This directly tests the transcript -> translation path requested in the brief.
+  Unchanged by this integration; semantic errors remain even with correct ASR.
 - Next candidates, if measurements justify them: Whisper Small, a verified Armenian
   fine-tune, and NLLB-200 distilled 600M. No alternate model is selected automatically.
 
@@ -113,15 +126,21 @@ export **each** project conversation in full and unedited as its own Markdown fi
 
 This stage does not capture microphone/system audio, identify speakers, handle live
 segmentation or verify the required 5 second end-of-phrase latency. Read-speech samples
-will need to be complemented by real conversational Armenian. Model choices remain
-provisional until actual quality, speed and memory results have been reviewed.
+will need to be complemented by real conversational Armenian. Vana is accepted as
+the MVP ASR; translator quality and broader conversational evaluation remain unresolved.
 
 The initial 15-clip screening run of Base + Marian had WER 137.92%, CER 98.65%,
 mean WAV processing time 11.72 s, maximum 24.36 s and sampled RSS 1012 MiB.
 ASR is the main speed and quality bottleneck. Marian also changes meaning when
 given correct normalized Armenian references (mean translation time 0.231 s).
-These defaults are retained to reproduce the failed baseline, not as accepted models.
-Stage 1 continues with deliberate model comparisons before live implementation.
+The old configuration remains available explicitly for reproducibility. Vana is now
+the default, with the same Marian translator. Stage 1 continues before live implementation.
+
+The full default ONNX -> Marian -> terminal chain was run offline on all 15 WAVs:
+mean processing 0.452 s, maximum 0.747 s, RTF 0.0488, sampled RSS 952.68 MiB.
+ASR loading was 2.016 s and translator loading 7.868 s, excluded from file processing.
+These numbers establish successful integration and WAV processing speed; they do not
+establish translation quality or live phrase-end latency. See TESTS.md for details.
 
 ## ASR-only comparison
 

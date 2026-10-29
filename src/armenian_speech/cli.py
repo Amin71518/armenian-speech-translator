@@ -54,7 +54,11 @@ def parser() -> argparse.ArgumentParser:
     source = cli.add_mutually_exclusive_group(required=True)
     source.add_argument("--wav", type=Path, help="One WAV file")
     source.add_argument("--manifest", type=Path, help="JSONL benchmark manifest")
-    cli.add_argument("--asr-model", default="base", help="Multilingual Whisper name or local path")
+    cli.add_argument("--asr-backend", choices=["onnx", "whisper"], default="onnx")
+    cli.add_argument(
+        "--asr-model",
+        help="ONNX local directory (default: cache-dir/vana); Whisper name/path (default: base)",
+    )
     cli.add_argument("--translation-model", default="Helsinki-NLP/opus-mt-hy-en")
     cli.add_argument("--threads", type=positive_int, default=4)
     cli.add_argument("--cache-dir", type=Path, default=Path(".cache/models"))
@@ -64,10 +68,9 @@ def parser() -> argparse.ArgumentParser:
 
 
 def run(args: argparse.Namespace) -> None:
-    from armenian_speech.asr import ArmenianASR
     from armenian_speech.translation import ArmenianTranslator
 
-    if args.asr_model.endswith(".en"):
+    if args.asr_backend == "whisper" and (args.asr_model or "base").endswith(".en"):
         raise ValueError("English-only Whisper cannot transcribe Armenian")
     if args.manifest:
         rows = read_manifest(args.manifest)
@@ -80,7 +83,25 @@ def run(args: argparse.Namespace) -> None:
     print(status, file=sys.stderr)
     with MemorySampler() as memory:
         started = perf_counter()
-        asr = ArmenianASR(args.asr_model, args.cache_dir, args.threads, args.offline)
+        if args.asr_backend == "onnx":
+            from armenian_speech.asr_onnx import OnnxArmenianASR
+
+            directory = Path(args.asr_model) if args.asr_model else args.cache_dir / "vana"
+            if not (directory / "PROVENANCE.json").is_file():
+                raise FileNotFoundError(
+                    f"Prepared ONNX model missing in {directory}. "
+                    "Run: poetry run python scripts/download_asr.py; "
+                    "or select a prepared directory with --asr-model."
+                )
+            asr = OnnxArmenianASR(directory, args.threads)
+            asr_model = asr.provenance["repo"]
+            asr_revision = asr.provenance["revision"]
+        else:
+            from armenian_speech.asr import ArmenianASR
+
+            asr_model = args.asr_model or "base"
+            asr = ArmenianASR(asr_model, args.cache_dir, args.threads, args.offline)
+            asr_revision = None
         asr_load_s = perf_counter() - started
         started = perf_counter()
         translator = ArmenianTranslator(
@@ -124,16 +145,21 @@ def run(args: argparse.Namespace) -> None:
                 name: importlib.metadata.version(name)
                 for name in (
                     "faster-whisper", "ctranslate2", "av", "transformers", "torch", "jiwer",
+                    "onnx-asr", "onnxruntime",
                 )
             },
         },
-        "asr_model": args.asr_model,
+        "asr_backend": args.asr_backend,
+        "asr_model": asr_model,
+        "asr_revision": asr_revision,
+        "asr_decoder": "rnnt_greedy" if args.asr_backend == "onnx" else "whisper",
         "translation_model": args.translation_model,
         "language": "hy",
         "asr_compute_type": "int8",
         "asr_temperature": getattr(asr, "temperature", None),
         "translation_compute_type": "float32",
-        "beam_size": 1,
+        "asr_beam_size": 1 if args.asr_backend == "whisper" else None,
+        "translation_beam_size": 1,
         "threads": args.threads,
         "asr_load_s": asr_load_s,
         "translation_load_s": translation_load_s,
