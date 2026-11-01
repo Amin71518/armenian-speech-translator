@@ -50,16 +50,6 @@ def test_manifest_paths_are_relative_to_manifest(tmp_path):
     assert read_manifest(manifest)[0]["path"] == audio.resolve()
 
 
-def test_faster_whisper_decoder_accepts_project_wav(tmp_path):
-    from faster_whisper.audio import decode_audio
-
-    audio = tmp_path / "sample.wav"
-    make_wav(audio)
-    decoded = decode_audio(str(audio))
-    assert len(decoded) == 160
-    assert decoded.dtype.name == "float32"
-
-
 def test_bad_manifest_fails_before_loading_models(tmp_path):
     manifest = tmp_path / "manifest.jsonl"
     manifest.write_text('{"audio": "missing.wav", "reference_hy": ""}', encoding="utf-8")

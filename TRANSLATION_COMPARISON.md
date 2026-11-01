@@ -1,5 +1,12 @@
 # Stage 1 Сравнение переводчиков HY EN
 
+> Исторический отчёт от 2026-10-29. После очистки 2026-10-30 в коде осталась
+> только NLLB greedy. Marian/M2M100 и экспериментальный beam override удалены;
+> приведённые ниже команды сравнения относятся к коммиту `0aabc46`.
+> Актуальная подготовка: `poetry run python scripts/download_translation.py`.
+> Актуальная проверка: `poetry run python scripts/check_translation.py --manifest data/local/fleurs/manifest.jsonl --offline --report reports/nllb_current.json`.
+> Исторические 22 теста сохранены как факт; после очистки прошли 16. См. TESTS.md.
+
 2026-10-29. **Выбран NLLB-200 distilled 600M, greedy, CPU float32.** Он заменяет
 Marian по умолчанию в WAV CLI. На правильных армянских текстах chrF++ вырос
 с 32,88 до 57,86. M2M100 проверен, но результат 39,61 и смысловые ошибки

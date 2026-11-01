@@ -7,9 +7,8 @@ from tests.test_experiment import make_wav
 
 def test_default_cli_backend_is_onnx():
     args = parser().parse_args(["--wav", "sample.wav"])
-    assert args.asr_backend == "onnx"
     assert args.asr_model is None
-    assert args.translation_model == "facebook/nllb-200-distilled-600M"
+    assert args.threads == 4
 
 
 def test_cli_loads_onnx_and_translation_once_for_multiple_files(tmp_path, monkeypatch, capsys):
@@ -35,8 +34,8 @@ def test_cli_loads_onnx_and_translation_once_for_multiple_files(tmp_path, monkey
             return [Segment(0, 0.01, "բարև")], 0.01
 
     class Translation:
-        def __init__(self, model, cache, threads, offline):
-            assert model == "facebook/nllb-200-distilled-600M"
+        def __init__(self, cache, threads, offline):
+            assert cache == directory.parent
             assert offline
             calls["translation_loads"] += 1
 
@@ -44,12 +43,8 @@ def test_cli_loads_onnx_and_translation_once_for_multiple_files(tmp_path, monkey
             calls["translations"].append(text)
             return "Hello"
 
-    def forbidden_whisper(*args, **kwargs):
-        raise AssertionError("Default ONNX pipeline must not load Whisper")
-
     monkeypatch.setattr("armenian_speech.asr_onnx.OnnxArmenianASR", ASR)
     monkeypatch.setattr("armenian_speech.translation.ArmenianTranslator", Translation)
-    monkeypatch.setattr("armenian_speech.asr.ArmenianASR", forbidden_whisper)
     report = tmp_path / "report.json"
     assert main([
         "--manifest", str(manifest), "--cache-dir", str(directory.parent),
@@ -61,32 +56,18 @@ def test_cli_loads_onnx_and_translation_once_for_multiple_files(tmp_path, monkey
     assert saved["asr_backend"] == "onnx"
     assert saved["asr_revision"] == "test"
     assert saved["asr_decoder"] == "rnnt_greedy"
-    assert saved["asr_temperature"] is None
+    assert saved["translation_model"] == "facebook/nllb-200-distilled-600M"
     assert all("text" not in row for row in saved["samples"])
 
 
-def test_missing_onnx_model_fails_without_whisper_fallback(tmp_path, monkeypatch, capsys):
+def test_missing_onnx_model_fails_before_translation(tmp_path, monkeypatch, capsys):
     audio = tmp_path / "sample.wav"
     make_wav(audio)
 
     def forbidden_model(*args, **kwargs):
         raise AssertionError("Missing ONNX artifacts must not trigger another model")
 
-    monkeypatch.setattr("armenian_speech.asr.ArmenianASR", forbidden_model)
+    monkeypatch.setattr("armenian_speech.asr_onnx.OnnxArmenianASR", forbidden_model)
     monkeypatch.setattr("armenian_speech.translation.ArmenianTranslator", forbidden_model)
     assert main(["--wav", str(audio), "--cache-dir", str(tmp_path / "missing")]) == 1
     assert "scripts/download_asr.py" in capsys.readouterr().err
-
-
-def test_explicit_whisper_backend_reaches_whisper(tmp_path, monkeypatch):
-    audio = tmp_path / "sample.wav"
-    make_wav(audio)
-    selected = []
-
-    def unavailable_whisper(model, cache, threads, offline):
-        selected.append(model)
-        raise RuntimeError("Intentional test failure")
-
-    monkeypatch.setattr("armenian_speech.asr.ArmenianASR", unavailable_whisper)
-    assert main(["--wav", str(audio), "--asr-backend", "whisper", "--offline"]) == 1
-    assert selected == ["base"]

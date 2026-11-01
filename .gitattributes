@@ -1,0 +1,2 @@
+# Preserve verbatim chat export bytes across Windows and other checkouts.
+chats/*.md -text

@@ -21,11 +21,9 @@ def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--manifest", type=Path, required=True)
-    cli.add_argument("--model", default=DEFAULT_TRANSLATION_MODEL)
     cli.add_argument("--threads", type=positive_int, default=4)
     cli.add_argument("--offline", action="store_true")
     cli.add_argument("--passes", type=positive_int, default=2)
-    cli.add_argument("--beams", type=positive_int, default=1)
     cli.add_argument("--report", type=Path)
     args = cli.parse_args()
     rows = read_manifest(args.manifest)
@@ -38,10 +36,7 @@ def main() -> int:
     power_start = psutil.sensors_battery()
     with MemorySampler() as memory:
         started = perf_counter()
-        translator = ArmenianTranslator(
-            args.model, Path(".cache/models"), args.threads, args.offline,
-        )
-        translator.generation_options["num_beams"] = args.beams
+        translator = ArmenianTranslator(Path(".cache/models"), args.threads, args.offline)
         load_s = perf_counter() - started
         for pass_number in range(args.passes):
             print(f"\nPass {pass_number + 1}/{args.passes}", flush=True)
@@ -72,8 +67,9 @@ def main() -> int:
             name: importlib.metadata.version(name)
             for name in ("torch", "transformers", "tokenizers", "sacrebleu")
         },
-        "model": args.model, "revision": translator.revision, "threads": args.threads,
-        "precision": "float32", "num_beams": args.beams,
+        "model": DEFAULT_TRANSLATION_MODEL, "revision": translator.revision,
+        "threads": args.threads,
+        "precision": "float32", "num_beams": translator.generation_options["num_beams"],
         "decoding": "do_sample=False, max_new_tokens=256",
         "inputs": "Correct normalized Armenian reference text only; no ASR",
         "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),

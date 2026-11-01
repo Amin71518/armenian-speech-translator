@@ -1,4 +1,4 @@
-"""Prepare a translation candidate separately from offline inference measurements."""
+"""Prepare NLLB separately from offline inference measurements."""
 
 import argparse
 import json
@@ -6,18 +6,15 @@ from pathlib import Path
 
 from huggingface_hub import HfApi, snapshot_download
 
-from armenian_speech.translation import M2M100_REVISION, NLLB_REVISION
-
-MODELS = {"nllb": "facebook/nllb-200-distilled-600M", "m2m100": "facebook/m2m100_418M"}
+from armenian_speech.translation import DEFAULT_TRANSLATION_MODEL, NLLB_REVISION
 
 
 def main() -> None:
     cli = argparse.ArgumentParser(description=__doc__)
-    cli.add_argument("--model", choices=MODELS, required=True)
-    cli.add_argument("--revision", help="Pin an upstream model commit for reproduction")
+    cli.add_argument("--revision", default=NLLB_REVISION, help="Pin an upstream model commit")
     args = cli.parse_args()
-    repo = MODELS[args.model]
-    revision = args.revision or (NLLB_REVISION if args.model == "nllb" else M2M100_REVISION)
+    repo = DEFAULT_TRANSLATION_MODEL
+    revision = args.revision
     files = {item.rfilename for item in HfApi().model_info(repo, revision=revision).siblings}
     weights = "model.safetensors" if "model.safetensors" in files else "pytorch_model.bin"
     snapshot = Path(snapshot_download(

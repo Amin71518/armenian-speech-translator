@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "method": "Independent visual review of final 4 s RMS envelopes in 10 ms windows; not a phonetic gold annotation; human listening confirmation pending",
+  "human_verified": false,
+  "recordings": [
+    {
+      "sample": "001.wav",
+      "sha256": "4a39d62f3d444df4754861fc90bd809ab7f6d8c96ac8dfbb320f1c61671d00b5",
+      "speech_end_interval_s": [
+        5.65,
+        5.9
+      ]
+    },
+    {
+      "sample": "002.wav",
+      "sha256": "83f3d9dd50d94f306f945f151649a9def49ffd622e0a38f700647ee0da2ebf67",
+      "speech_end_interval_s": [
+        9.0,
+        9.3
+      ]
+    },
+    {
+      "sample": "003.wav",
+      "sha256": "1c6ecd3e930931c9214793a6e9a62c2b7e8dee84525001d0a25190679c80052f",
+      "speech_end_interval_s": [
+        6.95,
+        7.2
+      ]
+    },
+    {
+      "sample": "004.wav",
+      "sha256": "9e1013c6ee59a1032f52988e8315067e38a61a1ac9c0e380797002bae53d2304",
+      "speech_end_interval_s": [
+        13.15,
+        13.45
+      ]
+    },
+    {
+      "sample": "005.wav",
+      "sha256": "5bf570c8673eaf973ae499f7a461349a9bd52158fe2b19bb856f97f4d2889506",
+      "speech_end_interval_s": [
+        11.15,
+        11.45
+      ]
+    },
+    {
+      "sample": "006.wav",
+      "sha256": "2b91a8249953a54c71cf56b3666098645afc3916d716a90a6a266f41a5972494",
+      "speech_end_interval_s": [
+        8.5,
+        8.75
+      ]
+    },
+    {
+      "sample": "007.wav",
+      "sha256": "300a728bf052e9ae48be05928705faeb8d08296e25d47b6b5eac8fb84fc6fca4",
+      "speech_end_interval_s": [
+        8.55,
+        8.8
+      ]
+    },
+    {
+      "sample": "008.wav",
+      "sha256": "06a7c34f7c8dce1219cb883ad8cf1818a46dd9c73848fa6e4ec27dce024e6a89",
+      "speech_end_interval_s": [
+        5.2,
+        5.45
+      ]
+    },
+    {
+      "sample": "009.wav",
+      "sha256": "18d0b15a7a184274e48fd12c5a84616ac5a9534319106e8e440c0c220776f494",
+      "speech_end_interval_s": [
+        6.0,
+        6.25
+      ]
+    },
+    {
+      "sample": "010.wav",
+      "sha256": "960ef420d836b592b8d06b6449d052ae722ffb004a32fa235647cbaf3b35905b",
+      "speech_end_interval_s": [
+        4.75,
+        5.0
+      ]
+    },
+    {
+      "sample": "011.wav",
+      "sha256": "b06757fb08b11818ec7b1d8eb01bd1a8878399893cc8e37b5ab91a2d8170ca0d",
+      "speech_end_interval_s": [
+        8.0,
+        8.25
+      ]
+    },
+    {
+      "sample": "012.wav",
+      "sha256": "339f3ec0dcc1066be0fbde1b932b9a5f975107a280544bf1727cff26d392f59e",
+      "speech_end_interval_s": [
+        10.15,
+        10.4
+      ]
+    },
+    {
+      "sample": "013.wav",
+      "sha256": "593fbfc4c0354135ad291b8c1431a16cf9b5c96461d998c0470f7aee29be6017",
+      "speech_end_interval_s": [
+        6.75,
+        7.05
+      ]
+    },
+    {
+      "sample": "014.wav",
+      "sha256": "24856b9aeba104a228204249901e68789c91884d18879288502bc066a26cb623",
+      "speech_end_interval_s": [
+        11.65,
+        11.95
+      ]
+    },
+    {
+      "sample": "015.wav",
+      "sha256": "b3e57771cafaa41a84f7f4fd39fd7eca7e1a10980e6438e95c987380eed45722",
+      "speech_end_interval_s": [
+        8.9,
+        9.25
+      ]
+    }
+  ]
+}

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from armenian_speech.asr import ArmenianASR, Segment
+from armenian_speech.asr import Segment
 from armenian_speech.asr_onnx import OnnxArmenianASR
 from armenian_speech.benchmark import evaluate
 from tests.test_experiment import make_wav
@@ -50,30 +50,3 @@ def test_asr_benchmark_scores_corpus_and_excludes_output_from_time(monkeypatch):
     assert result["summary"]["max_asr_s"] == 3
     assert result["summary"]["rtf"] == 1
     assert result["summary"]["wer"] == pytest.approx(0.25)
-
-
-def test_whisper_explicit_language_task_temperature_and_lazy_consumption(monkeypatch):
-    calls, consumed = {}, []
-
-    class Model:
-        def __init__(self, *args, **kwargs):
-            assert kwargs["device"] == "cpu"
-            assert kwargs["compute_type"] == "int8"
-
-        def transcribe(self, *args, **kwargs):
-            calls.update(kwargs)
-
-            def segments():
-                consumed.append(True)
-                yield Segment(0, 1, " բարև ")
-
-            return segments(), SimpleNamespace(duration=1.0)
-
-    monkeypatch.setitem(sys.modules, "faster_whisper", SimpleNamespace(WhisperModel=Model))
-    asr = ArmenianASR("base", Path("unused"), 4, True, temperature=0.0)
-    assert asr.transcribe(Path("unused.wav")) == ([Segment(0, 1, "բարև")], 1.0)
-    assert consumed == [True]
-    assert calls["language"] == "hy"
-    assert calls["task"] == "transcribe"
-    assert calls["temperature"] == 0.0
-    assert calls["vad_filter"] is False

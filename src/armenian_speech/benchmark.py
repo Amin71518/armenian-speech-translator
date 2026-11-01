@@ -1,4 +1,4 @@
-"""ASR-only evaluation; each backend must be measured in a fresh process."""
+"""FastConformer ASR-only evaluation, separate from translation and output timing."""
 
 import argparse
 import hashlib
@@ -52,8 +52,6 @@ def evaluate(asr, rows: list[dict]) -> dict:
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     cli = argparse.ArgumentParser(description=__doc__)
-    cli.add_argument("--backend", choices=["whisper", "onnx"], required=True)
-    cli.add_argument("--whisper-decoding", choices=["baseline", "greedy"], default="baseline")
     cli.add_argument("--manifest", type=Path, default=Path("data/local/fleurs/manifest.jsonl"))
     cli.add_argument("--model-dir", type=Path, default=Path(".cache/models/vana"))
     cli.add_argument("--threads", type=positive_int, default=4)
@@ -74,35 +72,21 @@ def main() -> int:
     with MemorySampler() as memory:
         initial_rss = memory.process.memory_info().rss
         started = perf_counter()
-        if args.backend == "whisper":
-            from armenian_speech.asr import ArmenianASR
+        from armenian_speech.asr_onnx import OnnxArmenianASR
 
-            temperature = 0.0 if args.whisper_decoding == "greedy" else (
-                0.0, 0.2, 0.4, 0.6, 0.8, 1.0,
-            )
-            asr = ArmenianASR(
-                "base", Path(".cache/models"), args.threads, True, temperature=temperature,
-            )
-            model = {
-                "name": "base", "language": "hy", "task": "transcribe", "beam_size": 1,
-                "temperature": temperature,
-            }
-        else:
-            from armenian_speech.asr_onnx import OnnxArmenianASR
-
-            asr = OnnxArmenianASR(args.model_dir, args.threads)
-            model = asr.provenance
+        asr = OnnxArmenianASR(args.model_dir, args.threads)
+        model = asr.provenance
         load_s = perf_counter() - started
         passes = []
         for index in range(args.passes):
-            print(f"Pass {index + 1}/{args.passes} ({args.backend})", flush=True)
+            print(f"Pass {index + 1}/{args.passes} (onnx)", flush=True)
             passes.append(evaluate(asr, rows))
     report = {
-        "backend": args.backend, "model": model, "threads": args.threads,
+        "backend": "onnx", "model": model, "threads": args.threads,
         "python": platform.python_version(),
         "versions": {
             name: importlib.metadata.version(name)
-            for name in ("onnx-asr", "onnxruntime", "faster-whisper", "ctranslate2", "jiwer")
+            for name in ("onnx-asr", "onnxruntime", "jiwer")
         },
         "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
         "measurement": "ASR only, including WAV decoding; no translation, no VAD, batch size 1",

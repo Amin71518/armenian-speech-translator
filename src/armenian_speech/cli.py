@@ -55,12 +55,10 @@ def parser() -> argparse.ArgumentParser:
     source = cli.add_mutually_exclusive_group(required=True)
     source.add_argument("--wav", type=Path, help="One WAV file")
     source.add_argument("--manifest", type=Path, help="JSONL benchmark manifest")
-    cli.add_argument("--asr-backend", choices=["onnx", "whisper"], default="onnx")
     cli.add_argument(
-        "--asr-model",
-        help="ONNX local directory (default: cache-dir/vana); Whisper name/path (default: base)",
+        "--asr-model", type=Path,
+        help="Prepared FastConformer INT8 directory (default: cache-dir/vana)",
     )
-    cli.add_argument("--translation-model", default=DEFAULT_TRANSLATION_MODEL)
     cli.add_argument("--threads", type=positive_int, default=4)
     cli.add_argument("--cache-dir", type=Path, default=Path(".cache/models"))
     cli.add_argument("--offline", action="store_true", help="Require cached models; no downloads")
@@ -69,45 +67,33 @@ def parser() -> argparse.ArgumentParser:
 
 
 def run(args: argparse.Namespace) -> None:
+    from armenian_speech.asr_onnx import OnnxArmenianASR
     from armenian_speech.translation import ArmenianTranslator
 
-    if args.asr_backend == "whisper" and (args.asr_model or "base").endswith(".en"):
-        raise ValueError("English-only Whisper cannot transcribe Armenian")
     if args.manifest:
         rows = read_manifest(args.manifest)
     else:
         validate_wav(args.wav)
         rows = [{"path": args.wav}]
-    status = "Loading cached CPU models (offline)..." if args.offline else (
-        "Loading local CPU models (first run may download weights)..."
+    status = (
+        "Loading cached CPU models (offline)..." if args.offline else "Loading local CPU models..."
     )
     print(status, file=sys.stderr)
     with MemorySampler() as memory:
         started = perf_counter()
-        if args.asr_backend == "onnx":
-            from armenian_speech.asr_onnx import OnnxArmenianASR
-
-            directory = Path(args.asr_model) if args.asr_model else args.cache_dir / "vana"
-            if not (directory / "PROVENANCE.json").is_file():
-                raise FileNotFoundError(
-                    f"Prepared ONNX model missing in {directory}. "
-                    "Run: poetry run python scripts/download_asr.py; "
-                    "or select a prepared directory with --asr-model."
-                )
-            asr = OnnxArmenianASR(directory, args.threads)
-            asr_model = asr.provenance["repo"]
-            asr_revision = asr.provenance["revision"]
-        else:
-            from armenian_speech.asr import ArmenianASR
-
-            asr_model = args.asr_model or "base"
-            asr = ArmenianASR(asr_model, args.cache_dir, args.threads, args.offline)
-            asr_revision = None
+        directory = args.asr_model or args.cache_dir / "vana"
+        if not (directory / "PROVENANCE.json").is_file():
+            raise FileNotFoundError(
+                f"Prepared ONNX model missing in {directory}. "
+                "Run: poetry run python scripts/download_asr.py; "
+                "or select a prepared directory with --asr-model."
+            )
+        asr = OnnxArmenianASR(directory, args.threads)
+        asr_model = asr.provenance["repo"]
+        asr_revision = asr.provenance["revision"]
         asr_load_s = perf_counter() - started
         started = perf_counter()
-        translator = ArmenianTranslator(
-            args.translation_model, args.cache_dir, args.threads, args.offline,
-        )
+        translator = ArmenianTranslator(args.cache_dir, args.threads, args.offline)
         translation_load_s = perf_counter() - started
         measurements, references, hypotheses = [], [], []
         for index, row in enumerate(rows, 1):
@@ -145,22 +131,20 @@ def run(args: argparse.Namespace) -> None:
             "libraries": {
                 name: importlib.metadata.version(name)
                 for name in (
-                    "faster-whisper", "ctranslate2", "av", "transformers", "torch", "jiwer",
+                    "av", "transformers", "torch", "jiwer",
                     "onnx-asr", "onnxruntime",
                 )
             },
         },
-        "asr_backend": args.asr_backend,
+        "asr_backend": "onnx",
         "asr_model": asr_model,
         "asr_revision": asr_revision,
-        "asr_decoder": "rnnt_greedy" if args.asr_backend == "onnx" else "whisper",
-        "translation_model": args.translation_model,
+        "asr_decoder": "rnnt_greedy",
+        "translation_model": DEFAULT_TRANSLATION_MODEL,
         "translation_revision": getattr(translator, "revision", None),
         "language": "hy",
         "asr_compute_type": "int8",
-        "asr_temperature": getattr(asr, "temperature", None),
         "translation_compute_type": "float32",
-        "asr_beam_size": 1 if args.asr_backend == "whisper" else None,
         "translation_beam_size": getattr(translator, "generation_options", {}).get("num_beams", 1),
         "threads": args.threads,
         "asr_load_s": asr_load_s,

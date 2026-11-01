@@ -1,5 +1,11 @@
 # Stage 1 Сравнение армянских ASR на CPU
 
+> Исторический отчёт от 2026-10-29, сохранён после очистки 2026-10-30.
+> Whisper удалён из актуального кода; прежние эксперименты воспроизводить из
+> коммита `0aabc46` в отдельном checkout, не возвращая legacy в основной pipeline.
+> Текущий ASR-only запуск: `poetry run python -m armenian_speech.benchmark --passes 2 --report reports/vana_asr_current.json`.
+> FastConformer принят для MVP; Stage 1 завершён. Новая проверка — в TESTS.md.
+
 2026-10-29. **Vana-Labs FastConformer RNN-T INT8 — рекомендуемый ASR-кандидат
 для продолжения Stage 1.** На тех же 15 WAV он существенно точнее и быстрее двух
 проверенных конфигураций Whisper Base. Это результат небольшой выборки читаемой
@@ -116,7 +122,9 @@ Vana-Labs:
 - Vana-Labs: `ec92cef52199c3874681321b13853e8fe602d23f`.
 - Контрольные суммы файлов модели записаны в локальном `PROVENANCE.json`
   и отчёте Vana. Скачаны только INT8 encoder/decoder, vocab, config, nemo80 и README.
-- Команды перечислены в разделе ASR-only comparison в README.
+- Актуальная ONNX-команда указана выше и в README. В коде `0aabc46` старый runner
+  принимал `--backend whisper` либо `--backend onnx`; для отдельного greedy Whisper
+  дополнительно использовался `--whisper-decoding greedy`.
 - Локальные отчёты: `reports/whisper_asr.json`, `reports/whisper_greedy.json`,
   `reports/onnx_smoke.json`, `reports/vana_asr.json`. Они содержат метрики и по три
   специально запрошенных примера, не полные транскрипты всех файлов.

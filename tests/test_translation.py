@@ -4,25 +4,16 @@ from types import SimpleNamespace
 
 import pytest
 
-from armenian_speech.translation import ArmenianTranslator
+from armenian_speech.translation import DEFAULT_TRANSLATION_MODEL, NLLB_REVISION, ArmenianTranslator
 
 
-def test_unknown_translation_model_is_rejected():
-    with pytest.raises(ValueError, match="Unsupported translation model"):
-        ArmenianTranslator("unknown/model", Path("unused"), 4, True)
-
-
-@pytest.mark.parametrize(("model", "source", "target"), [
-    ("Helsinki-NLP/opus-mt-hy-en", None, None),
-    ("facebook/nllb-200-distilled-600M", "hye_Armn", "eng_Latn"),
-    ("facebook/m2m100_418M", "hy", "en"),
-])
-def test_translation_language_controls_limits_and_empty_input(monkeypatch, model, source, target):
+def test_translation_language_controls_limits_and_empty_input(monkeypatch):
     import torch
 
     def local_snapshot(*args, **kwargs):
+        assert args == (DEFAULT_TRANSLATION_MODEL,)
         assert kwargs["local_files_only"] is True
-        assert len(kwargs["revision"]) == 40
+        assert kwargs["revision"] == NLLB_REVISION
         return "unused/pinned-snapshot"
 
     monkeypatch.setattr("huggingface_hub.snapshot_download", local_snapshot)
@@ -34,14 +25,12 @@ def test_translation_language_controls_limits_and_empty_input(monkeypatch, model
 
         def __init__(self, **kwargs):
             self.src_lang = kwargs.get("src_lang")
-            assert self.src_lang == source
+            assert self.src_lang == "hye_Armn"
             assert kwargs["local_files_only"]
 
         def convert_tokens_to_ids(self, token):
-            assert token == target
+            assert token == "eng_Latn"
             return 77
-
-        get_lang_id = convert_tokens_to_ids
 
         def __call__(self, text, **kwargs):
             assert kwargs["truncation"] is False
@@ -65,23 +54,21 @@ def test_translation_language_controls_limits_and_empty_input(monkeypatch, model
             return torch.tensor([[0, 77, 2]])
 
     def tokenizer_from_pretrained(model_source, **kwargs):
-        assert model_source == ("unused/pinned-snapshot" if source else model)
+        assert model_source == "unused/pinned-snapshot"
         return Tokenizer(**kwargs)
 
     tokenizer_class = SimpleNamespace(from_pretrained=tokenizer_from_pretrained)
     model_class = SimpleNamespace(from_pretrained=lambda *a, **kw: Model())
     monkeypatch.setitem(sys.modules, "transformers", SimpleNamespace(
-        AutoTokenizer=tokenizer_class, MarianTokenizer=tokenizer_class,
-        AutoModelForSeq2SeqLM=model_class, MarianMTModel=model_class,
+        AutoTokenizer=tokenizer_class, AutoModelForSeq2SeqLM=model_class,
     ))
-    translator = ArmenianTranslator(model, Path("unused"), 4, True)
+    translator = ArmenianTranslator(Path("unused"), 4, True)
     assert translator.translate("   ") == ""
     assert not calls
     assert translator.translate("բարև") == "Hello"
     assert calls[0]["do_sample"] is False
     assert calls[0]["num_beams"] == 1
-    assert calls[0].get("forced_bos_token_id") == (77 if target else None)
-    limit = 512 if source == "hye_Armn" else 1024
+    assert calls[0]["forced_bos_token_id"] == 77
     with pytest.raises(ValueError, match="exceeds"):
-        translator.translate("ա " * (limit + 1))
+        translator.translate("ա " * 513)
     assert len(calls) == 1

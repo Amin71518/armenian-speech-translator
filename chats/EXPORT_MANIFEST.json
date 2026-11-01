@@ -1,0 +1,82 @@
+{
+  "format": "Verbatim stored conversation text and visible tools in Markdown",
+  "scope": "All saved local sessions with this project working directory",
+  "snapshot": true,
+  "refresh_before_submission": true,
+  "not_an_official_ui_export": true,
+  "sessions": [
+    {
+      "session_id": "01a18805-9fd1-7f82-8b5b-4cc7e37d9f6f",
+      "parent_session_id": null,
+      "source_file": "rollout-2026-10-29T18-17-12-01a18805-9fd1-7f82-8b5b-4cc7e37d9f6f.jsonl",
+      "source_sha256": "ee30e975f1076c8bdd66aa170580cf2428acb113fa552e0354b0b17af47fe4c9",
+      "source_bytes": 5952930,
+      "source_lines_read": 1622,
+      "incomplete_tail": false,
+      "export_file": "2026-10-29_01a18805-9fd1-7f82-8b5b-4cc7e37d9f6f.md",
+      "export_sha256": "485985d8977fc29bf93652f81dda6327fca4847ff2c12fae2cb9c225fde8d05a",
+      "exported_records": 674,
+      "record_types": {
+        "user": 14,
+        "assistant": 60,
+        "custom_tool_call": 163,
+        "visible tool CommandExecution": 166,
+        "custom_tool_call_output": 163,
+        "visible tool McpToolCall": 4,
+        "function_call": 15,
+        "function_call_output": 15,
+        "visible tool Extension": 24,
+        "visible tool FileChange": 50
+      }
+    },
+    {
+      "session_id": "01a18d40-b34a-7bf0-aac3-fb9550e87046",
+      "parent_session_id": null,
+      "source_file": "rollout-2026-10-30T18-39-50-01a18d40-b34a-7bf0-aac3-fb9550e87046.jsonl",
+      "source_sha256": "15064b8028de9a95b438a267d180eb7f5863205e92ec113891d4a97dfbeea1d8",
+      "source_bytes": 14218928,
+      "source_lines_read": 3754,
+      "incomplete_tail": false,
+      "export_file": "2026-10-30_01a18d40-b34a-7bf0-aac3-fb9550e87046.md",
+      "export_sha256": "beb501e19a8dc2abea6a3a4e3871603931f087b530dea16d15c1d2789f009d7c",
+      "exported_records": 1414,
+      "record_types": {
+        "user": 41,
+        "assistant": 126,
+        "custom_tool_call": 325,
+        "visible tool CommandExecution": 417,
+        "custom_tool_call_output": 325,
+        "visible tool Extension": 20,
+        "function_call": 6,
+        "function_call_output": 6,
+        "visible tool FileChange": 146,
+        "visible tool ImageView": 1,
+        "attachment reference": 1
+      }
+    },
+    {
+      "session_id": "01a19761-e167-7d73-84af-1223f01e3356",
+      "parent_session_id": null,
+      "source_file": "rollout-2026-11-01T17-52-16-01a19761-e167-7d73-84af-1223f01e3356.jsonl",
+      "source_sha256": "96cdfba7cef5ceadb8d55f78d706c68792159a8a6e84954e444128675a3864da",
+      "source_bytes": 4515049,
+      "source_lines_read": 1102,
+      "incomplete_tail": false,
+      "export_file": "2026-11-01_01a19761-e167-7d73-84af-1223f01e3356.md",
+      "export_sha256": "80f2d690c217978f2c7d3f170e2321a1a3b41d00e0119c68da96c324071c3326",
+      "exported_records": 442,
+      "record_types": {
+        "user": 22,
+        "assistant": 50,
+        "custom_tool_call": 104,
+        "visible tool CommandExecution": 109,
+        "custom_tool_call_output": 103,
+        "visible tool FileChange": 41,
+        "function_call": 3,
+        "function_call_output": 3,
+        "visible tool Extension": 4,
+        "visible tool McpToolCall": 3
+      }
+    }
+  ]
+}
