@@ -1,5 +1,10 @@
 # Submission preparation validation 1 November 2026
 
+Publication update: the author subsequently approved commit/push; source commit
+b7bbc95 is published on `main`. Export classification correction added a regression
+test: **223 passed in23.13s**. See PUBLICATION.md. The222-test results below remain
+the earlier documentation checkpoint, not the final publication test count.
+
 The author selected the existing runtime snapshot with known limitations and
 authorized documentation/delivery preparation. No audio capture, new model run,
 runtime algorithm change, Git staging, commit or publication was performed during

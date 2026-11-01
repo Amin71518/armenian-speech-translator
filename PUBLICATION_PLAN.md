@@ -1,5 +1,9 @@
 # Publication plan for Amin71518
 
+**Executed after author approval:** source commit b7bbc95 was pushed to remote
+`main`, with the prior four commits preserved. [PUBLICATION.md](PUBLICATION.md)
+records the result. The plan below is retained as the pre-publication review record.
+
 Target: [Amin71518/armenian-speech-translator](https://github.com/Amin71518/armenian-speech-translator).
 The author requested a public repository. It has been created empty, without an
 initial commit or file upload. The saved Windows GitHub login was verified as

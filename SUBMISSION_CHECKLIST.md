@@ -24,12 +24,12 @@ anyone, commit, or overwrite work automatically.
 | <=5 s after actual phrase end | Not certified | Physical clocks/independent endpoints remain unvalidated; VAD-decision time is a different metric; prior overload failures retained |
 | Local inference only | Implemented | Prepared local ONNX/PyTorch models; network only in preparation, no cloud inference/API key |
 | Model choices and alternatives explained | Documented | README and ASR/TRANSLATION/DIARIZATION comparison documents |
-| Source code | Available locally; Git staging pending | `src/`, `scripts/`, `tests/`; substantial existing untracked work must be intentionally included at final Git step |
+| Source code | Published in main | Source/submission commit b7bbc95; previous four commits preserved |
 | Setup, audio routing, architecture and limitations | Documented | README.md; DEMO_GUIDE.md for rehearsal |
-| Complete project AI conversations, separate Markdown files | Local snapshot exported; refresh/review pending | Three actual project conversations; internal approval reviews excluded; `chats/EXPORT_MANIFEST.json`, CHAT_EXPORTS.md |
+| Complete project AI conversations, separate Markdown files | Three saved conversations exported; publication snapshot | Internal approval reviews excluded; manifest and CHAT_EXPORTS.md describe snapshot scope and future refresh |
 | Original AI history available at interview | Retain in Codex | Three main app chats found; do not archive/delete originals as a packaging step |
 | No weights, audio or keys in repository | Ignore rules and local audit | `.gitignore`; final Git selection must be reviewed again before publication |
-| Send repository link | Deferred by author | Public empty repository created for Amin71518; source commit/push awaiting approval |
+| Send repository link | Published | [Amin71518/armenian-speech-translator](https://github.com/Amin71518/armenian-speech-translator); PUBLICATION.md |
 
 ## Selected launch configuration
 
@@ -54,15 +54,18 @@ accuracy/DER acceptance result.
 - [x] Prepare an evaluator-facing README and a laptop demonstration guide.
 - [x] Keep model alternatives, failed experiments and uncertainty visible.
 - [x] Produce per-session exports from stored records, not reconstructed summaries.
-- [ ] Refresh the active chat export after the last project conversation.
-- [ ] Review exported chats/manifest for completeness, attachments and any additional
-  sessions from other directories/accounts. Local cwd matching cannot prove none exist.
+- [x] Refresh the active chat export for the approved publication snapshot.
+- [x] Check exported chats/manifest and match three main chats to local records;
+  automated internal reviews excluded. Other accounts/directories cannot be ruled
+  out by this local inventory; retain the originals for the interview.
 - [x] Run final validation and record it in VALIDATION_REPORT.md (222tests, Ruff, Poetry).
-- [ ] Review the final Git selection/diff with the author at the GitHub step.
-- [ ] At the author's final GitHub step, select source/docs/tests/chats, preserve
-  intended history and confirm the existing staged deletion `chats/README.md`.
-- [ ] Obtain the author's commit approval; choose repository visibility and publish
-  only when instructed. These steps have deliberately not been performed yet.
+- [x] Review the final Git selection/diff; author approved committing and uploading it.
+- [x] Include source/docs/tests/chats, preserve prior history and intended
+  `chats/README.md` deletion; exclude prohibited artifacts.
+- [x] Obtain commit approval and publish to the requested public personal repository.
+
+Future work/messages after this publication snapshot need a fresh export; they
+cannot already be present in an earlier immutable Git commit.
 
 No installer, GUI, echo cancellation, persistent speaker names, cross-session voice
 database, saved transcripts, or non-Armenian input support is required by the brief.

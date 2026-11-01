@@ -3,6 +3,23 @@
 Дата фиксации: 2026-11-01. Этот файл актуальнее прежнего STAGE2_HANDOVER.md:
 последний был намеренно восстановлен вместе с первой версией 4.2.
 
+## Проект опубликован после явного согласия пользователя
+
+Public repository: https://github.com/Amin71518/armenian-speech-translator .
+Основной source/submission commit b7bbc959ccb256a9ff27348f46d95a9a363f2589 уже
+отправлен в main, remote hash проверен. Предыдущие4commits сохранены, без force
+и squash. Локальная веткаmaster отслеживаетorigin/main. Текущий follow-up фиксирует
+итог публикации и обновляет chat snapshots; runtime/models не меняются.
+
+По документу включены source/README/docs/tests и3реальных AI chats; не включены
+веса, аудио, API keys, .cache/.venv/data/local/reports. Preceding165history blobs
+проверены на credential patterns без совпадений; это не абсолютное доказательство
+отсутствия любых секретов. Guardian_review exports исключены. Staged deletion
+chats/README.md включена в коммит. Итог: PUBLICATION.md и SUBMISSION_CHECKLIST.md.
+223tests прошли; качество/physical<=5s не подтверждены и не переобозначались.
+Для дальнейших изменений снова учитывать пользовательское разрешение на коммиты;
+последующие разговоры требуют нового экспорта, исходные чаты Codex сохранить.
+
 ## Пользователь разрешил финальный коммит и публикацию
 
 Пользователь подтвердил «давай закоммитим», с соблюдением документа: включить

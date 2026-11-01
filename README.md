@@ -254,6 +254,8 @@ only the prepared model files, not evaluation audio or numeric reports.
 
 ## Delivery and development history
 
+Public repository and publication checks: [PUBLICATION.md](PUBLICATION.md).
+
 [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md) maps the brief to implementation,
 evidence and outstanding delivery steps. [DEMO_GUIDE.md](DEMO_GUIDE.md) is the laptop
 rehearsal/code walkthrough. Historical decisions and tests remain in

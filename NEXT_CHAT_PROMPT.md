@@ -1,5 +1,11 @@
 Продолжаем оформление Mathrix AI Coding Challenge в этом проекте.
 
+Обновление: проект уже опубликован с согласия пользователя:
+https://github.com/Amin71518/armenian-speech-translator , source commit b7bbc95,
+remote main, local master tracks origin/main. Прочитать PUBLICATION.md и
+CURRENT_HANDOVER.md. Ниже сохранён исторический prompt до публикации; его
+утверждения о ещё не созданном remote и отложенной публикации устарели.
+
 Сначала прочитай CURRENT_HANDOVER.md, README.md, SUBMISSION_CHECKLIST.md,
 VALIDATION_REPORT.md и CHAT_EXPORTS.md. При необходимости история —
 DEVELOPMENT_HISTORY.md, DECISIONS.md, TESTS.md и SPEAKER_MATCHING_TRIAL.md.
