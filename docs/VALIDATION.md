@@ -6,6 +6,14 @@ Model comparisons and protocols are in [EXPERIMENTS](EXPERIMENTS.md), setup in
 
 ## Latest runtime validation
 
+After adding the root `main.py` launcher: **230 tests passed in 22.42 s**, Ruff and
+Poetry passed. New checks cover re-resolving changed Windows defaults, a headset's
+16 kHz rate, explicit overrides without default lookup, closing the discovery
+manager before delegation, missing defaults without fallback/inference, and
+help/listing without capture. Actual Windows discovery and format validation were
+also checked outside the sandbox, without opening capture or loading models.
+Speaker matching, ASR/translation and the original WAV entry point are unchanged.
+
 After documentation consolidation: **225 tests passed in 22.02 s**, Ruff and
 Poetry passed. The two added checks cover nested relative documentation links and
 missing documents/targets. The delivery audit found no broken links, invalid chat

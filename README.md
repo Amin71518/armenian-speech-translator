@@ -36,9 +36,36 @@ Poetry uses the project-local `.venv/` and the official CPU PyTorch wheel source
 Exact dependency versions are in `poetry.lock`. The speaker preparation helper also
 prepares TitaNet for comparison; live inference loads only CAMPPlus.
 
-## Select the audio devices
+## Run from main.py with current Windows defaults
 
-Connect the intended headphones before listing devices:
+From the project root, after model preparation:
+
+```powershell
+poetry run python main.py
+```
+
+You can also run the root `main.py` directly in PyCharm: choose this project's
+Poetry `.venv` interpreter and click Run. The root launcher uses the project folder
+as its working directory. No fixed device IDs need to be edited in the file.
+
+At each launch it selects the default Windows WASAPI microphone and the loopback
+of the default Windows playback output, reads the microphone's native sample rate,
+and prints the chosen names and IDs. It then runs the existing combined pipeline
+with `--diarize --experimental-speaker-matching`. It selects once at startup;
+it does not switch devices during capture or change Windows settings.
+
+The call application must use that playback output. If it overrides Windows defaults,
+select its actual output explicitly. The default microphone can also change when a
+headset connects; read the printed device names before speaking. Missing/invalid
+devices fail visibly instead of selecting an arbitrary alternative.
+
+## List devices and choose explicit IDs
+
+```powershell
+poetry run python main.py --list-devices
+```
+
+The original listing command remains available:
 
 ```powershell
 poetry run python -m armenian_speech.combined --list-devices
@@ -46,36 +73,36 @@ poetry run python -m armenian_speech.combined --list-devices
 
 The two printed lists have **separate numbering systems**:
 
-- `--microphone-device`: a sounddevice input ID. Everything captured here is `Me`.
-- `--device`: a PyAudioWPatch loopback ID. Select the output in which the call is
-  actually heard. The program captures all sound on that endpoint, not one app.
+- `--microphone-device [MIC_ID]`: choose an input from **Microphone IDs
+  (sounddevice)**, preferably its Windows WASAPI entry. This source is labelled `Me`.
+- `--device [LOOPBACK_ID]`: choose from **System loopback IDs (PyAudioWPatch)**.
+  Pick the row named for the speakers/headphones in which the call is heard, with
+  `[Loopback]` in its name. Do not use a sounddevice playback ID here.
 
-The last checked setup on this laptop was:
-
-| Device | ID | Format / purpose |
-| --- | ---: | --- |
-| Built-in Microphone Array, WASAPI | 14 | 48 kHz; selected microphone |
-| OnePlus Buds 3 loopback | 16 | System sound when the call plays in the Buds |
-| Realtek Speakers loopback | 17 | Alternative when the call plays through Realtek |
-| OnePlus Buds 3 microphone, WASAPI | 15 | 16 kHz; use only if deliberately selecting the headset mic |
-
-IDs change when devices are connected/disconnected. Earlier IDs 9/10 in development
-records are historical. Make sure Windows permits microphone access, and select
-the same output in the call application as the chosen loopback. There is no
-automatic device switching. Headphones help avoid the microphone hearing playback;
-echo cancellation and acoustic deduplication are outside this implementation.
-
-## Run the selected submission configuration
-
-For the current built-in microphone + Buds setup:
+IDs change when headphones are connected/disconnected. There are deliberately no
+fixed laptop-specific device numbers in these instructions. Replace the bracketed
+placeholders below with current numeric IDs, removing the brackets.
 
 ```powershell
-poetry run python -m armenian_speech.combined --microphone-device 14 --device 16 --diarize --experimental-speaker-matching
+poetry run python -m armenian_speech.combined --microphone-device [MIC_ID] --device [LOOPBACK_ID] --diarize --experimental-speaker-matching
 ```
 
-For Realtek playback, replace `--device 16` with `--device 17`. If deliberately using
-the headset microphone, use `--microphone-device 15 --microphone-rate 16000` instead.
-Check current IDs first; these numbers are examples from this laptop.
+The manual combined command defaults to a 48000 Hz microphone rate. If the selected
+input's `default_rate` differs, also add `--microphone-rate [MIC_RATE_HZ]` using
+that rate. The launcher reads the selected microphone's rate automatically, so a
+shorter explicit override is also available:
+
+```powershell
+poetry run python main.py --microphone-device [MIC_ID] --device [LOOPBACK_ID]
+```
+
+You may override just one ID and keep the other Windows default. Other combined
+options, such as `--speaker-diagnostics` or `--duration`, are forwarded. `--help`
+and `--list-devices` do not start capture or load inference models.
+
+Make sure Windows permits microphone access. The program captures all sound on the
+selected output, not one app. Headphones help avoid the microphone hearing playback;
+echo cancellation and acoustic deduplication are outside this implementation.
 
 Wait for `Combined live active`, then speak Armenian. Output is paired:
 
@@ -119,10 +146,10 @@ to the existing live text-fragment guard. Detailed rules and adverse results:
 
 ```powershell
 # Microphone only, no system-speaker identification
-poetry run python -m armenian_speech.microphone --device 14 --sample-rate 48000 --live
+poetry run python -m armenian_speech.microphone --device [MIC_ID] --sample-rate [MIC_RATE_HZ] --live
 
 # System audio only
-poetry run python -m armenian_speech.system_audio --device 16 --live --diarize --experimental-speaker-matching
+poetry run python -m armenian_speech.system_audio --device [LOOPBACK_ID] --live --diarize --experimental-speaker-matching
 
 # Original offline WAV path: mono PCM16, 16 kHz
 poetry run armenian-speech --wav "C:\path\to\armenian.wav" --offline
@@ -182,7 +209,8 @@ its last part; sequential ASR/MT calls cannot be preempted. Output follows dispa
 not a global ordering by speech timestamp. Ctrl+C drains accepted work within a
 shared deadline, then accounts for anything unfinished.
 
-Source responsibilities: `combined.py` orchestrates both inputs, `microphone.py`
+Source responsibilities: root `main.py` calls `launcher.py` to resolve startup
+devices and forward the selected configuration; `combined.py` orchestrates both inputs, `microphone.py`
 and `system_audio.py` capture, `live_vad.py`/`loopback_vad.py` convert and segment,
 `fair_queue.py` schedules, `speakers.py` matches voices, `live_pipeline.py` owns the
 spawn worker, `asr_onnx.py` and `translation.py` wrap the models, `output.py` formats.

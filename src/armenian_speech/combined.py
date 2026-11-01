@@ -184,7 +184,7 @@ def run(manager, backend, args, worker, stopped):
     return 130 if outcome == "ctrl_c" else 0
 
 
-def main(argv=None):
+def argument_parser():
     cli = parser()
     cli.description = __doc__
     cli.add_argument("--microphone-device", type=int, help="sounddevice input ID")
@@ -192,6 +192,11 @@ def main(argv=None):
     cli.add_argument("--microphone-channels", type=positive_int, default=1)
     cli.add_argument("--pending-per-source", type=positive_int, default=2)
     cli.set_defaults(live=True)
+    return cli
+
+
+def main(argv=None):
+    cli = argument_parser()
     args = cli.parse_args(argv)
     if args.speaker_diagnostics and not args.diarize:
         cli.error("--speaker-diagnostics requires --diarize")
