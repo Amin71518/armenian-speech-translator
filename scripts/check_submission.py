@@ -17,6 +17,22 @@ SECRET_PATTERNS = {
     'AWS access key': r'\bAKIA[0-9A-Z]{16}\b',
     'private key': r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----',
 }
+DELIVERY_DOCS = ('README.md', 'DEMO_GUIDE.md', 'docs/EXPERIMENTS.md', 'docs/VALIDATION.md')
+
+
+def documentation_link_errors(root, documents=DELIVERY_DOCS):
+    errors = []
+    for name in documents:
+        source = root / name
+        if not source.is_file():
+            errors.append({'file': name, 'target': 'required document missing'})
+            continue
+        for target in re.findall(r'\]\(([^)]+)\)', source.read_text(encoding='utf-8')):
+            if '://' not in target and not target.startswith('#'):
+                path = target.split('#')[0]
+                if path and not (source.parent / path).is_file():
+                    errors.append({'file': name, 'target': target})
+    return errors
 
 
 def main():
@@ -26,7 +42,7 @@ def main():
     root = Path.cwd()
     raw = subprocess.check_output(['git', 'ls-files', '-co', '--exclude-standard', '-z'])
     paths = sorted({p for p in raw.decode().split('\0') if p and (root / p).is_file()})
-    forbidden, secrets, broken_links = [], [], []
+    forbidden, secrets = [], []
     for name in paths:
         lower = name.lower()
         if (lower.endswith(FORBIDDEN) or lower.startswith(('.cache/', '.venv/', 'data/local/',
@@ -39,12 +55,7 @@ def main():
                 if re.search(pattern, content):
                     # Report location/type only, never echo a matching value.
                     secrets.append({'file': name, 'kind': kind})
-    for name in ('README.md', 'SUBMISSION_CHECKLIST.md', 'DEMO_GUIDE.md', 'CHAT_EXPORTS.md'):
-        for target in re.findall(r'\]\(([^)]+)\)', (root / name).read_text(encoding='utf-8')):
-            if '://' not in target and not target.startswith('#'):
-                path = target.split('#')[0]
-                if path and not (root / path).is_file():
-                    broken_links.append({'file': name, 'target': target})
+    broken_links = documentation_link_errors(root)
     manifest = json.loads((root / 'chats/EXPORT_MANIFEST.json').read_text(encoding='utf-8'))
     invalid_exports = []
     for entry in manifest['sessions']:

@@ -113,7 +113,7 @@ IDs are session-local, with a default capacity of eight and no recycling.
 Replies below 1.5 s cannot create a new ID even in the trial; those below 1 s
 cannot produce an embedding. Unknown speech still reaches ASR/translation, subject
 to the existing live text-fragment guard. Detailed rules and adverse results:
-[SPEAKER_MATCHING_TRIAL.md](SPEAKER_MATCHING_TRIAL.md).
+[matching experiments and adverse controls](docs/EXPERIMENTS.md#speaker-matching-failures-and-selected-trial).
 
 ### Other entry points
 
@@ -150,9 +150,7 @@ review all model terms before reuse. The code repository does not redistribute w
 
 These ASR/translation scores are small-sample historical measurements, not live
 conversation accuracy. Comparisons and provenance are in
-[ASR_COMPARISON.md](ASR_COMPARISON.md),
-[TRANSLATION_COMPARISON.md](TRANSLATION_COMPARISON.md), and
-[DIARIZATION_COMPARISON.md](DIARIZATION_COMPARISON.md).
+[EXPERIMENTS.md](docs/EXPERIMENTS.md).
 
 ## Architecture
 
@@ -237,7 +235,7 @@ poetry check
 Use `python -m pytest`, not the standalone entry point, because tests import the
 repository's `scripts` and `tests` namespace modules. Explicit `--basetemp` avoids
 the sandbox's Windows Temp permission issue. Tests check mechanics and regressions;
-they do not certify conversation quality. See [TESTS.md](TESTS.md) for actual runs.
+they do not certify conversation quality. See [VALIDATION.md](docs/VALIDATION.md) for actual runs.
 
 Optional public read-speech reproduction (preparation refuses to overwrite data):
 
@@ -252,30 +250,46 @@ not distributed in the repository. See each script's `--help`/docstring and the
 linked experiment protocol before running it. The application itself requires
 only the prepared model files, not evaluation audio or numeric reports.
 
-## Delivery and development history
+## Documentation and project history
 
-Public repository and publication checks: [PUBLICATION.md](PUBLICATION.md).
+- [DEMO_GUIDE.md](DEMO_GUIDE.md): laptop rehearsal and interview code walkthrough.
+- [EXPERIMENTS.md](docs/EXPERIMENTS.md): model selection, protocols, failures and tradeoffs.
+- [VALIDATION.md](docs/VALIDATION.md): tested behavior, latency evidence and limitations.
 
-[SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md) maps the brief to implementation,
-evidence and outstanding delivery steps. [DEMO_GUIDE.md](DEMO_GUIDE.md) is the laptop
-rehearsal/code walkthrough. Historical decisions and tests remain in
-[DECISIONS.md](DECISIONS.md) and [TESTS.md](TESTS.md). The previous long development
-README is preserved as [DEVELOPMENT_HISTORY.md](DEVELOPMENT_HISTORY.md); its device
-IDs and stage descriptions are historical. Latest working context:
-[CURRENT_HANDOVER.md](CURRENT_HANDOVER.md).
+Detailed former stage journals and handovers remain in
+[Git history](https://github.com/Amin71518/armenian-speech-translator/tree/d84653f60fd74a8fdafa14645a161854b80d4019).
+The current documentation consolidates them without rewriting the original commits.
 
-`chats/` contains Markdown exports sourced from the saved Codex session records,
-one file per actual project conversation; automated internal review sessions are excluded. Message bodies are not
-summarized or rewritten. `EXPORT_MANIFEST.json` records source/export hashes and
-snapshot counts. Refresh before submission because this chat is still active:
+## AI conversations and publication
+
+Repository: [Amin71518/armenian-speech-translator](https://github.com/Amin71518/armenian-speech-translator),
+public branch `main`. Existing project history is preserved. The local `master`
+branch tracks `origin/main`.
+
+`chats/` contains three separate Markdown exports of the actual project Codex
+conversations. Message bodies are copied from saved session records without
+summarizing or rewriting them; visible tool records are serialized as JSON.
+Automated internal approval reviews are excluded. `EXPORT_MANIFEST.json` records
+source/export hashes and snapshot counts. These are local record-derived exports,
+not official UI exports; original attachments remain referenced, not bundled as
+recordings or weights. Keep the original chats available in Codex for the interview.
+
+The published exports are snapshots. To include later project conversations,
+refresh them on the author's original laptop and review the resulting changes:
 
 ```powershell
 poetry run python -m scripts.export_project_chats
+poetry run python -m scripts.check_submission
 ```
 
-Keep the original conversations available in Codex for the interview. The local
-export covers saved sessions whose working directory is this project; it cannot
-prove the absence of additional work in other accounts/machines/directories.
-Repository: [Amin71518/armenian-speech-translator](https://github.com/Amin71518/armenian-speech-translator).
-Final chat refresh and source publication require the author-approved commit step. Model weights, audio, caches, reports and credentials
-must stay out of that repository. No model/API keys are required by inference.
+The exporter covers saved sessions with this project working directory, not other
+accounts/machines/directories. It refuses to replace the manifest if no matching
+sessions are found. Internal metadata is excluded and source journals remain
+read-only. Git preserves export bytes without automatic line-ending conversion.
+Documentation consolidation leaves the three existing exports byte-identical.
+
+Model weights, audio recordings and API keys must not be committed. Local model
+caches, evaluation audio, reports and the environment remain ignored. The delivery
+audit checks common credential patterns, forbidden artifacts, documentation links
+and export hashes; it neither stages nor publishes files and is not a proof against
+every possible secret. No API key is required by inference.
